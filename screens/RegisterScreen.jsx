@@ -1,15 +1,143 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from "react-native";
 
 export default function RegisterScreen() {
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Pantalla de Registro</Text>
+      <Text style={styles.title}>DentalPoint</Text>
+      <View style={styles.card}>
+        <Text style={styles.titleForm}>Registrate</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre"
+          placeholderTextColor="#999"
+          keyboardType="default"
+          autoCapitalize="none"
+          value={nombre}
+          onChangeText={setNombre}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Apellido"
+          placeholderTextColor="#999"
+          keyboardType="default"
+          autoCapitalize="none"
+          value={apellido}
+          onChangeText={setApellido}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#999"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Contraseña"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirmar contraseña"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Registrarse</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  text: { fontSize: 20 }
+  container: {
+    flex: 1,
+    backgroundColor: "#0090D0",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 40,
+    color: "#F4F4F4",
+  },
+  card: {
+    width: "100%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+    textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleForm: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2592C5',
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingTop:10,
+    paddingBottom:10,
+    textShadowColor: '#cce6f5',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
+  },
+  input: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f4ffff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 20,
+    borderColor: "#a9d0ee",
+    borderWidth: 2,
+    shadowColor: "#000033",
+  },
+  button: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#0077b6",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
 });
