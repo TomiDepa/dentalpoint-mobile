@@ -38,7 +38,7 @@ export default function LoginScreen({ navigation }) {
         />
 
         {/* Botón de login */}
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("HomeOdontologo")}>
           <Text style={styles.buttonText}>Iniciar sesión</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button}>
