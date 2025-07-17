@@ -1,61 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
+  View, Text, FlatList, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator
 } from 'react-native';
 import Header from '../components/Header';
-
-const historiasMock = [
-  {
-    id: '1',
-    fecha: '2025-05-10',
-    odontologo: 'Dra. Laura Fernández',
-    descripcion: 'Control de rutina y limpieza.',
-    tratamiento: 'Profilaxis, aplicación de flúor.',
-    observaciones: 'Paciente en buen estado general.',
-  },
-  {
-    id: '2',
-    fecha: '2025-04-02',
-    odontologo: 'Dr. Juan Pérez',
-    descripcion: 'Consulta por dolor en muela.',
-    tratamiento: 'Endodoncia en molar inferior derecho.',
-    observaciones: 'Se recomienda seguimiento.',
-  },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config';
 
 export default function HistoriasClinicasScreen() {
+  const [historias, setHistorias] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistorias = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem('usuario');
+        if (!userDataString) return;
+        const user = JSON.parse(userDataString);
+
+        const response = await fetch(`${API_URL}/api/historiasclinicas/paciente/${user.id}`);
+        const data = await response.json();
+        setHistorias(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistorias();
+  }, []);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.historiaCard} onPress={() => setSelected(item)}>
-      <Text style={styles.fecha}>{item.fecha}</Text>
-      <Text style={styles.descripcion}>{item.descripcion}</Text>
-      <Text style={styles.odontologo}>Odontólogo: {item.odontologo}</Text>
+      <Text style={styles.fecha}>{item.fecha?.slice(0, 10)}</Text>
+      <Text style={styles.descripcion}>{item.detalle}</Text>
+      <Text style={styles.odontologo}>
+        Odontólogo: {item.odontologo?.nombre} {item.odontologo?.apellido}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <Header title="Historias Clínicas" />
-
       <View style={styles.bodyContainer}>
         <View style={styles.card}>
-          <FlatList
-            data={historiasMock}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 30 }}
-          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <FlatList
+              data={historias}
+              keyExtractor={(item) => (item.id ? item.id.toString() : Math.random().toString())}
+              renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 30 }}
+            />
+          )}
         </View>
       </View>
 
-      {/* Modal de detalle */}
       <Modal visible={!!selected} animationType="slide" transparent>
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
@@ -63,19 +65,15 @@ export default function HistoriasClinicasScreen() {
               <Text style={styles.modalTitle}>Detalle de la Historia</Text>
 
               <Text style={styles.modalLabel}>Fecha:</Text>
-              <Text style={styles.modalText}>{selected?.fecha}</Text>
+              <Text style={styles.modalText}>{selected?.fecha?.slice(0, 10)}</Text>
 
               <Text style={styles.modalLabel}>Odontólogo:</Text>
-              <Text style={styles.modalText}>{selected?.odontologo}</Text>
+              <Text style={styles.modalText}>
+                {selected?.odontologo?.nombre} {selected?.odontologo?.apellido}
+              </Text>
 
-              <Text style={styles.modalLabel}>Descripción:</Text>
-              <Text style={styles.modalText}>{selected?.descripcion}</Text>
-
-              <Text style={styles.modalLabel}>Tratamiento:</Text>
-              <Text style={styles.modalText}>{selected?.tratamiento}</Text>
-
-              <Text style={styles.modalLabel}>Observaciones:</Text>
-              <Text style={styles.modalText}>{selected?.observaciones}</Text>
+              <Text style={styles.modalLabel}>Detalle:</Text>
+              <Text style={styles.modalText}>{selected?.detalle}</Text>
 
               <TouchableOpacity style={styles.closeButton} onPress={() => setSelected(null)}>
                 <Text style={styles.closeButtonText}>Cerrar</Text>

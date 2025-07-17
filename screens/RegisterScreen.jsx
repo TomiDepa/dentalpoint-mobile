@@ -5,15 +5,75 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  Alert,
 } from "react-native";
+import { API_URL } from "../config";
 
-export default function RegisterScreen() {
+export default function RegisterScreen({ navigation }) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
+  const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+  if (!nombre || !apellido || !email || !dni || !password || !confirmPassword) {
+    return Alert.alert("Error", "Completá todos los campos");
+  }
+
+  if (password.length < 6) {
+    return Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
+  }
+
+  if (password !== confirmPassword) {
+    return Alert.alert("Error", "Las contraseñas no coinciden");
+  }
+
+  setLoading(true);
+
+  const newUser = {
+    nombre,
+    apellido,
+    email,
+    contrasena: password,
+    dni,
+    rol: "usuario",
+    categoria: "general",
+    localidad: "",
+  };
+
+  console.log("🟣 Enviando registro:", newUser);
+
+  try {
+    const response = await fetch(`${API_URL}/api/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUser),
+    });
+
+    console.log("🟡 Status de respuesta:", response.status);
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      console.log("🔴 Error del backend:", error);
+      throw new Error(error || "Error al registrar");
+    }
+
+    const data = await response.json();
+    console.log("🟢 Registro exitoso:", data);
+
+    Alert.alert("¡Éxito!", "Usuario registrado correctamente");
+    navigation.navigate("Login");
+  } catch (error) {
+    console.error("❌ Error en registro:", error.message);
+    Alert.alert("Error", error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <View style={styles.container}>
@@ -21,57 +81,22 @@ export default function RegisterScreen() {
       <View style={styles.card}>
         <Text style={styles.titleForm}>Registrate</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre"
-          placeholderTextColor="#999"
-          keyboardType="default"
-          autoCapitalize="none"
-          value={nombre}
-          onChangeText={setNombre}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Apellido"
-          placeholderTextColor="#999"
-          keyboardType="default"
-          autoCapitalize="none"
-          value={apellido}
-          onChangeText={setApellido}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmar contraseña"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
+        <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
+        <TextInput style={styles.input} placeholder="Apellido" value={apellido} onChangeText={setApellido} />
+        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="DNI" keyboardType="numeric" value={dni} onChangeText={setDni} />
+        <TextInput style={styles.input} placeholder="Contraseña" secureTextEntry value={password} onChangeText={setPassword} />
+        <TextInput style={styles.input} placeholder="Confirmar contraseña" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Registrarse</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? "Registrando..." : "Registrarse"}</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {

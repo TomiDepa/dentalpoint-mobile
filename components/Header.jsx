@@ -1,17 +1,37 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { Ionicons, FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Header({ showIcon = true }) {
   const navigation = useNavigation();
+  const [rol, setRol] = useState(null);
+
+  useEffect(() => {
+    const cargarRol = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('usuario');
+        if (userData) {
+          const usuario = JSON.parse(userData);
+          setRol(usuario.rol);
+          console.log("🟢 Rol detectado:", usuario.rol);
+        }
+      } catch (error) {
+        console.error('❌ Error obteniendo rol:', error);
+      }
+    };
+    cargarRol();
+  }, []);
+
+  const handleHome = () => {
+    if (rol === 'admin') navigation.navigate('HomeOdontologo');
+    else navigation.navigate('HomePaciente');
+  };
 
   return (
     <View style={styles.card}>
-      <TouchableOpacity
-        style={styles.headerLeft}
-        onPress={() => navigation.navigate("HomeOdontologo")}
-      >
+      <TouchableOpacity style={styles.headerLeft} onPress={handleHome}>
         <Image
           source={require("../assets/logo.png")}
           style={styles.logo}

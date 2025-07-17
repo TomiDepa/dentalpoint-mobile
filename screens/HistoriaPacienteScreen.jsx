@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,60 +7,91 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-} from 'react-native';
-import Header from '../components/Header';
-import { useRoute } from '@react-navigation/native';
-
-const historiasMock = [
-  {
-    id: '1',
-    fecha: '2025-05-10',
-    odontologo: 'Dra. Laura Fernández',
-    descripcion: 'Control de rutina',
-    tratamiento: 'Profilaxis y flúor',
-    observaciones: 'Todo en orden',
-  },
-  {
-    id: '2',
-    fecha: '2025-04-02',
-    odontologo: 'Dr. Juan Pérez',
-    descripcion: 'Dolor en muela',
-    tratamiento: 'Endodoncia',
-    observaciones: 'Requiere control',
-  },
-];
+  ActivityIndicator,
+} from "react-native";
+import Header from "../components/Header";
+import { useRoute } from "@react-navigation/native";
+import { API_URL } from "../config";
 
 export default function HistoriaPacienteScreen() {
   const route = useRoute();
   const { id } = route.params;
+  console.log("ID recibido:", id);
 
-  // TODO: Usar el id para traer historias reales del backend
-
+  const [historias, setHistorias] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.historiaCard} onPress={() => setSelected(item)}>
-      <Text style={styles.fecha}>{item.fecha}</Text>
-      <Text style={styles.descripcion}>{item.descripcion}</Text>
-      <Text style={styles.odontologo}>Odontólogo: {item.odontologo}</Text>
-    </TouchableOpacity>
-  );
+  const getHistorias = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${API_URL}/api/historiasclinicas/paciente/${id}`
+      );
+      const data = await response.json();
+      setHistorias(data);
+      console.log(data);
+    } catch (error) {
+      console.log("Error:", error);
+      setHistorias([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getHistorias();
+  }, []);
+
+  const formatFecha = (fechaStr) => {
+    if (!fechaStr) return "";
+    const fecha = new Date(fechaStr);
+    const dia = fecha.getDate().toString().padStart(2, "0");
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  };
+
+  const renderItem = ({ item }) => {
+    const fechaFormateada = formatFecha(item.fecha);
+
+    return (
+      <TouchableOpacity
+        style={styles.historiaCard}
+        onPress={() => setSelected(item)}
+      >
+        <Text style={styles.fecha}>{fechaFormateada}</Text>
+        <Text style={styles.descripcion}>{item.descripcion}</Text>
+        <Text style={styles.odontologo}>
+          Odontólogo: {item.odontologo?.nombre} {item.odontologo?.apellido}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Header/>
+      <Header />
 
       <View style={styles.bodyContainer}>
         <View style={styles.card}>
-          <FlatList
-          data={historiasMock}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 30 }}
-          ListEmptyComponent={
-            <Text style={styles.sinDatos}>No hay historias clínicas disponibles.</Text>
-          }
-        />
+          {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <FlatList
+              data={historias}
+              keyExtractor={(item, index) =>
+                item?.id ? item.id.toString() : index.toString()
+              }
+              renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 30 }}
+              ListEmptyComponent={
+                <Text style={styles.sinDatos}>
+                  No hay historias clínicas disponibles.
+                </Text>
+              }
+            />
+          )}
         </View>
       </View>
 
@@ -72,21 +103,22 @@ export default function HistoriaPacienteScreen() {
               <Text style={styles.modalTitle}>Detalle de la Historia</Text>
 
               <Text style={styles.modalLabel}>Fecha:</Text>
-              <Text style={styles.modalText}>{selected?.fecha}</Text>
+              <Text style={styles.modalText}>
+                {selected?.fecha ? formatFecha(selected.fecha) : ""}
+              </Text>
 
               <Text style={styles.modalLabel}>Odontólogo:</Text>
-              <Text style={styles.modalText}>{selected?.odontologo}</Text>
+              <Text style={styles.modalText}>
+                {selected?.odontologo?.nombre} {selected?.odontologo?.apellido}
+              </Text>
 
               <Text style={styles.modalLabel}>Descripción:</Text>
-              <Text style={styles.modalText}>{selected?.descripcion}</Text>
+              <Text style={styles.modalText}>{selected?.detalle}</Text>
 
-              <Text style={styles.modalLabel}>Tratamiento:</Text>
-              <Text style={styles.modalText}>{selected?.tratamiento}</Text>
-
-              <Text style={styles.modalLabel}>Observaciones:</Text>
-              <Text style={styles.modalText}>{selected?.observaciones}</Text>
-
-              <TouchableOpacity style={styles.closeButton} onPress={() => setSelected(null)}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSelected(null)}
+              >
                 <Text style={styles.closeButtonText}>Cerrar</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -98,84 +130,50 @@ export default function HistoriaPacienteScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#0090D0',
-  },
-  bodyContainer: {
-   paddingHorizontal: 16, paddingBottom: 30
-},
-card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  container: { flex: 1, backgroundColor: "#0090D0" },
+  bodyContainer: { paddingHorizontal: 16, paddingBottom: 30 },
+  card: {
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderBottomEndRadius: 16,
     borderBottomStartRadius: 16,
     padding: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
   },
   historiaCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
   },
-  fecha: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#004B8D',
-  },
-  descripcion: {
-    marginTop: 5,
-    color: '#333',
-  },
-  odontologo: {
-    marginTop: 5,
-    fontStyle: 'italic',
-    color: '#555',
-  },
-  sinDatos: {
-    color: '#fff',
-    textAlign: 'center',
-    marginTop: 20,
-  },
+  fecha: { fontSize: 16, fontWeight: "bold", color: "#004B8D" },
+  descripcion: { marginTop: 5, color: "#333" },
+  odontologo: { marginTop: 5, fontStyle: "italic", color: "#555" },
+  sinDatos: { color: "#fff", textAlign: "center", marginTop: 20 },
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
     padding: 16,
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
-    maxHeight: '85%',
+    maxHeight: "85%",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#004B8D',
+    color: "#004B8D",
   },
-  modalLabel: {
-    fontWeight: 'bold',
-    marginTop: 10,
-    color: '#333',
-  },
-  modalText: {
-    color: '#444',
-    marginBottom: 5,
-  },
+  modalLabel: { fontWeight: "bold", marginTop: 10, color: "#333" },
+  modalText: { color: "#444", marginBottom: 5 },
   closeButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
     padding: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  closeButtonText: { color: "#fff", fontWeight: "bold" },
 });

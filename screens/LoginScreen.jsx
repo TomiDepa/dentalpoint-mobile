@@ -5,70 +5,96 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { API_URL } from "../config";
+
+
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [contrasena, setContrasena] = useState("");
+
+  const handleLogin = async () => {
+  try {
+    console.log("🟡 Enviando login:", { email, contrasena });
+
+    const response = await fetch(`${API_URL}/api/usuarios/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, contrasena }),
+    });
+
+    console.log("🟣 Status de respuesta:", response.status);
+
+    const data = await response.json();
+    console.log("🟢 Respuesta JSON:", data);
+
+    if (!response.ok) throw new Error(data.error || "Email o contraseña incorrectos");
+
+    const { token, usuario } = data;
+
+    await AsyncStorage.setItem("token", token);
+    await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
+    Alert.alert("Bienvenido", `Hola ${usuario.nombre}`);
+
+    if (usuario.rol === "usuario") {
+      navigation.navigate("HomePaciente");
+    } else if (usuario.rol === "admin") {
+      navigation.navigate("HomeOdontologo");
+    } else {
+      Alert.alert("Error", "Rol desconocido");
+    }
+  } catch (error) {
+    console.error("🔴 Error en login:", error);
+    Alert.alert("Error al iniciar sesión", error.message);
+  }
+};
+
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>DentalPoint</Text>
       <View style={styles.card}>
-        <Text style={styles.titleForm}>Iniciar sesion</Text>
-        {/* Inputs */}
+        <Text style={styles.titleForm}>Iniciar sesión</Text>
+
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#999"
           keyboardType="email-address"
-          autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
         />
-
         <TextInput
           style={styles.input}
           placeholder="Contraseña"
           placeholderTextColor="#999"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          value={contrasena}
+          onChangeText={setContrasena}
         />
 
-        {/* Botón de login */}
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("HomeOdontologo")}>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Iniciar sesión</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Iniciar sesión con Google</Text>
-        </TouchableOpacity>
 
-        {/*Recuperacion de contrasena*/}
-        <Text style={styles.rememberPass}>
-          ¿Olvidaste tu contraseña?{' '} <Text style={styles.link}>Recuperala acá</Text>
-        </Text>
-
-        {/* Enlace a registro */}
-        <Text style={styles.registerText}>
-            ¿No tenés cuenta?
-          </Text>
+        <Text style={styles.registerText}>¿No tenés cuenta?</Text>
         <TouchableOpacity style={styles.buttonRegister} onPress={() => navigation.navigate("Register")}>
-            <Text style={styles.buttonText}>Registrate</Text>
+          <Text style={styles.buttonText}>Registrate</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0090D0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20
+    backgroundColor: "#0090D0",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
   },
   title: {
     fontSize: 32,
@@ -77,29 +103,25 @@ const styles = StyleSheet.create({
     color: "#F4F4F4",
   },
   card: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 8,
-    textAlign: 'center',
-    display:'flex', 
     alignItems: "center",
-    justifyContent: "center",
   },
   titleForm: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#2592C5',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#2592C5",
     marginBottom: 20,
-    paddingTop:10,
-    paddingBottom:10,
-    textShadowColor: '#cce6f5',
+    paddingTop: 10,
+    paddingBottom: 10,
+    textShadowColor: "#cce6f5",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
   },
@@ -113,7 +135,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#a9d0ee",
     borderWidth: 2,
-    shadowColor: "#000033",
   },
   button: {
     width: "100%",
@@ -130,16 +151,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   rememberPass: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   link: {
-    color: '#0d47a1',
-    fontWeight: '600',
+    color: "#0d47a1",
+    fontWeight: "600",
   },
   registerText: {
     marginTop: 35,
-    marginBottom: 10, 
-    textAlign: 'center',
+    marginBottom: 10,
+    textAlign: "center",
     color: "#000",
     fontSize: 14,
   },
@@ -152,6 +173,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
   },
-  
-   
 });
