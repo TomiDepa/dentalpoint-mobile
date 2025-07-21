@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "dentalpoint",
-    "slug": "dentalpoint",
+    "slug": "dentalpoint-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
