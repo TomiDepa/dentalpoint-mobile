@@ -12,17 +12,14 @@ export default function NuevoTurnoScreen() {
   const [odontologos, setOdontologos] = useState([]);
   const [odontologo, setOdontologo] = useState('');
   const [disponibilidad, setDisponibilidad] = useState([]);
-
   const [fecha, setFecha] = useState(new Date());
   const [hora, setHora] = useState('');
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
-
   const [descripcion, setDescripcion] = useState('');
   const [showFechaPicker, setShowFechaPicker] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
   const [idPaciente, setIdPaciente] = useState(null);
 
   useEffect(() => {
@@ -105,53 +102,52 @@ export default function NuevoTurnoScreen() {
   };
 
   const solicitarTurno = async () => {
-  setError('');
-  setSuccess('');
+    setError('');
+    setSuccess('');
 
-  if (!odontologo || !hora || !descripcion) {
-    setError('Completa todos los campos para agendar el turno.');
-    return;
-  }
+    if (!odontologo || !hora || !descripcion) {
+      setError('Completa todos los campos para agendar el turno.');
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const fechaStr = fecha.toISOString().slice(0, 10);
+    try {
+      const fechaStr = fecha.toISOString().slice(0, 10);
 
-    const res = await fetch(`${API_URL}/api/turnos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fecha: fechaStr,
-        hora,
-        estado: 'Pendiente',
-        id_paciente: idPaciente,
-        id_odontologo: odontologo,
-        descripcion,
-        duracion: 20
-      })
-    });
+      const res = await fetch(`${API_URL}/api/turnos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fecha: fechaStr,
+          hora,
+          estado: 'Pendiente',
+          id_paciente: idPaciente,
+          id_odontologo: odontologo,
+          descripcion,
+          duracion: 20
+        })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || 'Error al crear turno.');
+      if (!res.ok) throw new Error(data.error || 'Error al crear turno.');
 
-    setSuccess('¡Turno agendado con éxito!');
+      setSuccess('¡Turno agendado con éxito!');
 
-    // Limpiar campos:
-    setOdontologo('');
-    setHora('');
-    setDescripcion('');
-    setFecha(new Date());
-    setHorariosDisponibles([]);
-    setDisponibilidad([]);
-
-  } catch (e) {
-    setError(e.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      // Limpiar campos:
+      setOdontologo('');
+      setHora('');
+      setDescripcion('');
+      setFecha(new Date());
+      setHorariosDisponibles([]);
+      setDisponibilidad([]);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -214,7 +210,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0090D0' },
   bodyContainer: { padding: 16 },
   card: { backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 18 },
-  picker: { backgroundColor: '#f8f9fa', marginVertical: 8 , color: "000000" ,},
+  picker: { backgroundColor: '#f8f9fa', marginVertical: 8, color: 'black' }, // Color negro en el texto seleccionado
   input: { backgroundColor: '#f8f9fa', padding: 14, marginVertical: 8, borderRadius: 10 },
   button: { backgroundColor: '#2196F3', padding: 14, marginTop: 20, borderRadius: 10, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: 'bold' },

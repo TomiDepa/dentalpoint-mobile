@@ -62,7 +62,7 @@ export default function LoginScreen({ navigation }) {
 
         <View style={styles.passwordContainer}>
           <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            style={[styles.input, { flex: 1, marginBottom: 0, color: 'black' }]} // Color negro en la contraseña
             placeholder="Contraseña"
             placeholderTextColor="#999"
             secureTextEntry={!showPassword}
@@ -146,7 +146,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#a9d0ee",
     borderWidth: 2,
-    color:"000000",
   },
   passwordContainer: {
     flexDirection: "row",

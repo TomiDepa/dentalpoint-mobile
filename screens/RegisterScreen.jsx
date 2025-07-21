@@ -85,7 +85,7 @@ export default function RegisterScreen({ navigation }) {
 
         <View style={styles.passwordContainer}>
           <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            style={[styles.input, { flex: 1, marginBottom: 0, color: 'black' }]}
             placeholder="Contraseña"
             placeholderTextColor="#999"
             secureTextEntry={!showPassword}
@@ -99,7 +99,7 @@ export default function RegisterScreen({ navigation }) {
 
         <View style={styles.passwordContainer}>
           <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            style={[styles.input, { flex: 1, marginBottom: 0, color: 'black' }]}
             placeholder="Confirmar contraseña"
             placeholderTextColor="#999"
             secureTextEntry={!showConfirmPassword}
