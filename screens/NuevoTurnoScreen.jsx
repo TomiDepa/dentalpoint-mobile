@@ -158,7 +158,7 @@ export default function NuevoTurnoScreen() {
       <Header title="Nuevo Turno" />
       <ScrollView contentContainerStyle={styles.bodyContainer}>
         <View style={styles.card}>
-          <Picker selectedValue={odontologo} onValueChange={setOdontologo} style={styles.picker}>
+          <Picker selectedValue={odontologo} placeholderTextColor="#999" onValueChange={setOdontologo} style={styles.picker}>
             <Picker.Item label="Seleccione odontólogo" value="" />
             {odontologos.map(o => (
               <Picker.Item key={o.id} label={`${o.nombre} ${o.apellido}`} value={o.id} />
@@ -180,14 +180,14 @@ export default function NuevoTurnoScreen() {
             />
           )}
 
-          <Picker selectedValue={hora} onValueChange={setHora} style={styles.picker}>
+          <Picker selectedValue={hora} onValueChange={setHora} placeholderTextColor="#999" style={styles.picker}>
             <Picker.Item label="Seleccione horario" value="" />
             {horariosDisponibles.map(h => (
               <Picker.Item key={h} label={h} value={h} />
             ))}
           </Picker>
 
-          <Picker selectedValue={descripcion} onValueChange={setDescripcion} style={styles.picker}>
+          <Picker selectedValue={descripcion} onValueChange={setDescripcion} placeholderTextColor="#999" style={styles.picker}>
             <Picker.Item label="Motivo de consulta" value="" />
             {['Consulta General', 'Limpieza', 'Extracción', 'Ortodoncia'].map((t, i) => (
               <Picker.Item key={i} label={t} value={t} />
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0090D0' },
   bodyContainer: { padding: 16 },
   card: { backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 18 },
-  picker: { backgroundColor: '#f8f9fa', marginVertical: 8 },
+  picker: { backgroundColor: '#f8f9fa', marginVertical: 8 , color: "000000" ,},
   input: { backgroundColor: '#f8f9fa', padding: 14, marginVertical: 8, borderRadius: 10 },
   button: { backgroundColor: '#2196F3', padding: 14, marginTop: 20, borderRadius: 10, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: 'bold' },

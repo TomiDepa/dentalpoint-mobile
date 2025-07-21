@@ -78,15 +78,16 @@ export default function RegisterScreen({ navigation }) {
       <View style={styles.card}>
         <Text style={styles.titleForm}>Registrate</Text>
 
-        <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
-        <TextInput style={styles.input} placeholder="Apellido" value={apellido} onChangeText={setApellido} />
-        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-        <TextInput style={styles.input} placeholder="DNI" keyboardType="numeric" value={dni} onChangeText={setDni} />
+        <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
+        <TextInput style={styles.input} placeholder="Apellido" placeholderTextColor="#999" value={apellido} onChangeText={setApellido} />
+        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#999" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="DNI" placeholderTextColor="#999"  keyboardType="numeric" value={dni} onChangeText={setDni} />
 
         <View style={styles.passwordContainer}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             placeholder="Contraseña"
+            placeholderTextColor="#999"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
@@ -100,6 +101,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             placeholder="Confirmar contraseña"
+            placeholderTextColor="#999"
             secureTextEntry={!showConfirmPassword}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -166,6 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#a9d0ee",
     borderWidth: 2,
+    color:"000000",
   },
   passwordContainer: {
     flexDirection: "row",

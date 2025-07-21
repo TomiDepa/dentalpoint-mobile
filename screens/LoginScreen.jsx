@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#a9d0ee",
     borderWidth: 2,
+    color:"000000",
   },
   passwordContainer: {
     flexDirection: "row",
