@@ -17,7 +17,7 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    setError(""); // Limpiar error previo
+    setError("");
     try {
       const response = await fetch(`${API_URL}/api/usuarios/login`, {
         method: "POST",

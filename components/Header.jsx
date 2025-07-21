@@ -15,7 +15,6 @@ export default function Header({ showIcon = true }) {
         if (userData) {
           const usuario = JSON.parse(userData);
           setRol(usuario.rol);
-          console.log("🟢 Rol detectado:", usuario.rol);
         }
       } catch (error) {
         console.error('❌ Error obteniendo rol:', error);

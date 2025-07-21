@@ -16,7 +16,6 @@ import { API_URL } from "../config";
 export default function HistoriaPacienteScreen() {
   const route = useRoute();
   const { id } = route.params;
-  console.log("ID recibido:", id);
 
   const [historias, setHistorias] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +29,6 @@ export default function HistoriaPacienteScreen() {
       );
       const data = await response.json();
       setHistorias(data);
-      console.log(data);
     } catch (error) {
       console.log("Error:", error);
       setHistorias([]);

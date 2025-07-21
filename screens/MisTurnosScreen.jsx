@@ -12,7 +12,6 @@ export default function MisTurnosScreen() {
     try {
       const userData = await AsyncStorage.getItem('usuario');
       const usuario = JSON.parse(userData);
-      console.log("🟢 Usuario logueado:", usuario);
 
       const turnosRes = await fetch(`${API_URL}/api/turnos/turnos-paciente?id=${usuario.id}`);
       const turnosData = await turnosRes.json();
@@ -29,7 +28,6 @@ export default function MisTurnosScreen() {
         nombreOdontologo: odontologosMap[t.id_odontologo] || 'Odontólogo desconocido'
       }));
 
-      console.log("🟣 Turnos procesados:", turnosConNombre);
       setTurnos(turnosConNombre);
     } catch (error) {
       console.error('❌ Error cargando turnos o usuarios:', error.message);

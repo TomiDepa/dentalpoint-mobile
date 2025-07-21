@@ -42,12 +42,10 @@ export default function HomeOdontologoScreen() {
           (t) => t.id_odontologo === user.id
         );
         setTurnos(turnosOdontologo);
-        console.log("Turnos filtrados por odontólogo:", turnosOdontologo);
       } else {
         setTurnos([]);
       }
     } catch (error) {
-      console.log(error);
       setTurnos([]);
     } finally {
       setLoading(false);
