@@ -1,88 +1,208 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
+} from 'react-native';
 import Header from '../components/Header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from '../config.js';
 
 export default function NuevoTurnoScreen() {
-  const [fecha, setFecha] = useState(new Date());
-  const [hora, setHora] = useState(new Date());
-  const [showFecha, setShowFecha] = useState(false);
-  const [showHora, setShowHora] = useState(false);
+  const [odontologos, setOdontologos] = useState([]);
   const [odontologo, setOdontologo] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [disponibilidad, setDisponibilidad] = useState([]);
 
-  const odontologosDisponibles = ['Dra. Ana Martínez', 'Dr. Luis Pérez', 'Dra. Camila Gómez'];
-  const tratamientos = ['Limpieza dental', 'Extracción', 'Ortodoncia', 'Endodoncia'];
+  const [fecha, setFecha] = useState(new Date());
+  const [hora, setHora] = useState('');
+  const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+
+  const [descripcion, setDescripcion] = useState('');
+  const [showFechaPicker, setShowFechaPicker] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const [idPaciente, setIdPaciente] = useState(null);
+
+  useEffect(() => {
+    cargarDatosUsuario();
+    cargarOdontologos();
+  }, []);
+
+  useEffect(() => {
+    if (odontologo) {
+      cargarDisponibilidad(odontologo);
+    } else {
+      setDisponibilidad([]);
+      setHorariosDisponibles([]);
+    }
+  }, [odontologo, fecha]);
+
+  const cargarDatosUsuario = async () => {
+    const userData = await AsyncStorage.getItem('usuario');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setIdPaciente(user.id);
+    }
+  };
+
+  const cargarOdontologos = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/usuarios`);
+      const data = await res.json();
+      const filtrados = data.filter(u => u.rol === 'admin');
+      setOdontologos(filtrados);
+    } catch (e) {
+      setError('Error al cargar odontólogos.');
+    }
+  };
+
+  const cargarDisponibilidad = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/disponibilidad/${id}`);
+      const data = await res.json();
+      setDisponibilidad(data);
+      filtrarHorarios(data);
+    } catch (e) {
+      setDisponibilidad([]);
+      setHorariosDisponibles([]);
+    }
+  };
+
+  const filtrarHorarios = async (dispon) => {
+    const fechaStr = fecha.toISOString().slice(0, 10);
+    const disponibilidadDia = dispon.find(d => d.fecha === fechaStr);
+    if (!disponibilidadDia) {
+      setHorariosDisponibles([]);
+      return;
+    }
+
+    const bloques = generarBloquesHorario(disponibilidadDia.hora_inicio, disponibilidadDia.hora_fin);
+
+    const resTurnos = await fetch(`${API_URL}/api/turnos/turnos-odontologo?id=${odontologo}&fecha=${fechaStr}`);
+    const turnos = await resTurnos.json();
+
+    const ocupados = turnos.map(t => t.hora.slice(0, 5));
+    const disponibles = bloques.filter(h => !ocupados.includes(h));
+    setHorariosDisponibles(disponibles);
+  };
+
+  const generarBloquesHorario = (inicio, fin) => {
+    const bloques = [];
+    let [h, m] = inicio.split(':').map(Number);
+    const [hFin, mFin] = fin.split(':').map(Number);
+
+    while (h < hFin || (h === hFin && m < mFin)) {
+      bloques.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      m += 20;
+      if (m >= 60) {
+        m -= 60;
+        h++;
+      }
+    }
+    return bloques;
+  };
+
+  const solicitarTurno = async () => {
+  setError('');
+  setSuccess('');
+
+  if (!odontologo || !hora || !descripcion) {
+    setError('Completa todos los campos para agendar el turno.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const fechaStr = fecha.toISOString().slice(0, 10);
+
+    const res = await fetch(`${API_URL}/api/turnos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fecha: fechaStr,
+        hora,
+        estado: 'Pendiente',
+        id_paciente: idPaciente,
+        id_odontologo: odontologo,
+        descripcion,
+        duracion: 20
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Error al crear turno.');
+
+    setSuccess('¡Turno agendado con éxito!');
+
+    // Limpiar campos:
+    setOdontologo('');
+    setHora('');
+    setDescripcion('');
+    setFecha(new Date());
+    setHorariosDisponibles([]);
+    setDisponibilidad([]);
+
+  } catch (e) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
       <Header title="Nuevo Turno" />
       <ScrollView contentContainerStyle={styles.bodyContainer}>
         <View style={styles.card}>
-          {/* Fecha */}
-          <TouchableOpacity style={styles.input} onPress={() => setShowFecha(true)}>
+          <Picker selectedValue={odontologo} onValueChange={setOdontologo} style={styles.picker}>
+            <Picker.Item label="Seleccione odontólogo" value="" />
+            {odontologos.map(o => (
+              <Picker.Item key={o.id} label={`${o.nombre} ${o.apellido}`} value={o.id} />
+            ))}
+          </Picker>
+
+          <TouchableOpacity style={styles.input} onPress={() => setShowFechaPicker(true)}>
             <Text>{fecha.toDateString()}</Text>
           </TouchableOpacity>
-          {showFecha && (
+
+          {showFechaPicker && (
             <DateTimePicker
               value={fecha}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                setShowFecha(false);
-                if (selectedDate) setFecha(selectedDate);
+              onChange={(e, d) => {
+                setShowFechaPicker(false);
+                if (d) setFecha(d);
               }}
             />
           )}
 
-          {/* Hora */}
-          <TouchableOpacity style={styles.input} onPress={() => setShowHora(true)}>
-            <Text>{hora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-          </TouchableOpacity>
-          {showHora && (
-            <DateTimePicker
-              value={hora}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedTime) => {
-                setShowHora(false);
-                if (selectedTime) setHora(selectedTime);
-              }}
-            />
-          )}
+          <Picker selectedValue={hora} onValueChange={setHora} style={styles.picker}>
+            <Picker.Item label="Seleccione horario" value="" />
+            {horariosDisponibles.map(h => (
+              <Picker.Item key={h} label={h} value={h} />
+            ))}
+          </Picker>
 
-          {/* Odontólogo */}
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={odontologo}
-              onValueChange={(itemValue) => setOdontologo(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Seleccione un odontólogo" value="" />
-              {odontologosDisponibles.map((o, index) => (
-                <Picker.Item key={index} label={o} value={o} />
-              ))}
-            </Picker>
-          </View>
+          <Picker selectedValue={descripcion} onValueChange={setDescripcion} style={styles.picker}>
+            <Picker.Item label="Motivo de consulta" value="" />
+            {['Consulta General', 'Limpieza', 'Extracción', 'Ortodoncia'].map((t, i) => (
+              <Picker.Item key={i} label={t} value={t} />
+            ))}
+          </Picker>
 
-          {/* Descripción / Tratamiento */}
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={descripcion}
-              onValueChange={(itemValue) => setDescripcion(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Seleccione tratamiento" value="" />
-              {tratamientos.map((t, index) => (
-                <Picker.Item key={index} label={t} value={t} />
-              ))}
-            </Picker>
-          </View>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {success ? <Text style={styles.success}>{success}</Text> : null}
 
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Solicitar Turno</Text>
+          <TouchableOpacity style={styles.button} onPress={solicitarTurno} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Reservar Turno</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -92,46 +212,12 @@ export default function NuevoTurnoScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0090D0' },
-  bodyContainer: { paddingHorizontal: 16, paddingBottom: 30 },
-  card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderBottomEndRadius: 16,
-    borderBottomStartRadius: 16,
-    padding: 18,
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    marginBottom: 15,
-    height: 50,
-    justifyContent: 'center',
-  },
-  pickerContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-    height: 50,
-    justifyContent: 'center',
-    ...Platform.select({
-      android: {
-        paddingVertical: 0,
-      },
-    }),
-  },
-  picker: {
-    color: '#000',
-    height: 50,
-    width: '100%',
-  },
-  button: {
-    backgroundColor: '#2196F3',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  bodyContainer: { padding: 16 },
+  card: { backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 18 },
+  picker: { backgroundColor: '#f8f9fa', marginVertical: 8 },
+  input: { backgroundColor: '#f8f9fa', padding: 14, marginVertical: 8, borderRadius: 10 },
+  button: { backgroundColor: '#2196F3', padding: 14, marginTop: 20, borderRadius: 10, alignItems: 'center' },
+  buttonText: { color: '#fff', fontWeight: 'bold' },
+  error: { color: 'red', textAlign: 'center', marginVertical: 8 },
+  success: { color: 'limegreen', textAlign: 'center', marginVertical: 8 },
 });

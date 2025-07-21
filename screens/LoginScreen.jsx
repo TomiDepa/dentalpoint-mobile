@@ -5,53 +5,45 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
-
-
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-  try {
-    console.log("🟡 Enviando login:", { email, contrasena });
+    setError(""); // Limpiar error previo
+    try {
+      const response = await fetch(`${API_URL}/api/usuarios/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, contrasena }),
+      });
 
-    const response = await fetch(`${API_URL}/api/usuarios/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, contrasena }),
-    });
+      const data = await response.json();
 
-    console.log("🟣 Status de respuesta:", response.status);
+      if (!response.ok) throw new Error(data.error || "Email o contraseña incorrectos");
 
-    const data = await response.json();
-    console.log("🟢 Respuesta JSON:", data);
+      const { token, usuario } = data;
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
 
-    if (!response.ok) throw new Error(data.error || "Email o contraseña incorrectos");
-
-    const { token, usuario } = data;
-
-    await AsyncStorage.setItem("token", token);
-    await AsyncStorage.setItem("usuario", JSON.stringify(usuario));
-    Alert.alert("Bienvenido", `Hola ${usuario.nombre}`);
-
-    if (usuario.rol === "usuario") {
-      navigation.navigate("HomePaciente");
-    } else if (usuario.rol === "admin") {
-      navigation.navigate("HomeOdontologo");
-    } else {
-      Alert.alert("Error", "Rol desconocido");
+      if (usuario.rol === "usuario") {
+        navigation.navigate("HomePaciente");
+      } else if (usuario.rol === "admin") {
+        navigation.navigate("HomeOdontologo");
+      } else {
+        setError("Rol desconocido");
+      }
+    } catch (error) {
+      setError(error.message);
     }
-  } catch (error) {
-    console.error("🔴 Error en login:", error);
-    Alert.alert("Error al iniciar sesión", error.message);
-  }
-};
-
+  };
 
   return (
     <View style={styles.container}>
@@ -67,27 +59,46 @@ export default function LoginScreen({ navigation }) {
           value={email}
           onChangeText={setEmail}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={contrasena}
-          onChangeText={setContrasena}
-        />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            placeholder="Contraseña"
+            placeholderTextColor="#999"
+            secureTextEntry={!showPassword}
+            value={contrasena}
+            onChangeText={setContrasena}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={24}
+              color="#555"
+              style={{ marginLeft: 10 }}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {error !== "" && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
 
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Iniciar sesión</Text>
         </TouchableOpacity>
 
         <Text style={styles.registerText}>¿No tenés cuenta?</Text>
-        <TouchableOpacity style={styles.buttonRegister} onPress={() => navigation.navigate("Register")}>
+        <TouchableOpacity
+          style={styles.buttonRegister}
+          onPress={() => navigation.navigate("Register")}
+        >
           <Text style={styles.buttonText}>Registrate</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -136,6 +147,17 @@ const styles = StyleSheet.create({
     borderColor: "#a9d0ee",
     borderWidth: 2,
   },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 20,
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 15,
+    textAlign: "center",
+  },
   button: {
     width: "100%",
     height: 50,
@@ -148,13 +170,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "600",
-  },
-  rememberPass: {
-    textAlign: "center",
-  },
-  link: {
-    color: "#0d47a1",
     fontWeight: "600",
   },
   registerText: {

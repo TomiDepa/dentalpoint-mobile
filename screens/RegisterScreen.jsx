@@ -5,9 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from "react-native";
 import { API_URL } from "../config";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function RegisterScreen({ navigation }) {
   const [nombre, setNombre] = useState("");
@@ -17,63 +17,60 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
-  if (!nombre || !apellido || !email || !dni || !password || !confirmPassword) {
-    return Alert.alert("Error", "Completá todos los campos");
-  }
+    setError("");
 
-  if (password.length < 6) {
-    return Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
-  }
-
-  if (password !== confirmPassword) {
-    return Alert.alert("Error", "Las contraseñas no coinciden");
-  }
-
-  setLoading(true);
-
-  const newUser = {
-    nombre,
-    apellido,
-    email,
-    contrasena: password,
-    dni,
-    rol: "usuario",
-    categoria: "general",
-    localidad: "",
-  };
-
-  console.log("🟣 Enviando registro:", newUser);
-
-  try {
-    const response = await fetch(`${API_URL}/api/usuarios`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
-    });
-
-    console.log("🟡 Status de respuesta:", response.status);
-
-    if (!response.ok) {
-      const { error } = await response.json();
-      console.log("🔴 Error del backend:", error);
-      throw new Error(error || "Error al registrar");
+    if (!nombre || !apellido || !email || !dni || !password || !confirmPassword) {
+      setError("Completá todos los campos");
+      return;
     }
 
-    const data = await response.json();
-    console.log("🟢 Registro exitoso:", data);
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
 
-    Alert.alert("¡Éxito!", "Usuario registrado correctamente");
-    navigation.navigate("Login");
-  } catch (error) {
-    console.error("❌ Error en registro:", error.message);
-    Alert.alert("Error", error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
 
+    setLoading(true);
+
+    const newUser = {
+      nombre,
+      apellido,
+      email,
+      contrasena: password,
+      dni,
+      rol: "usuario",
+      categoria: "general",
+      localidad: "",
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/usuarios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || "Error al registrar");
+      }
+
+      setLoading(false);
+      navigation.navigate("Login");
+    } catch (e) {
+      setError(e.message);
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -85,8 +82,34 @@ export default function RegisterScreen({ navigation }) {
         <TextInput style={styles.input} placeholder="Apellido" value={apellido} onChangeText={setApellido} />
         <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} placeholder="DNI" keyboardType="numeric" value={dni} onChangeText={setDni} />
-        <TextInput style={styles.input} placeholder="Contraseña" secureTextEntry value={password} onChangeText={setPassword} />
-        <TextInput style={styles.input} placeholder="Confirmar contraseña" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            placeholder="Contraseña"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#555" style={{ marginLeft: 10 }} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            placeholder="Confirmar contraseña"
+            secureTextEntry={!showConfirmPassword}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="#555" style={{ marginLeft: 10 }} />
+          </TouchableOpacity>
+        </View>
+
+        {error !== "" && <Text style={styles.errorText}>{error}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? "Registrando..." : "Registrarse"}</Text>
@@ -95,8 +118,6 @@ export default function RegisterScreen({ navigation }) {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -122,16 +143,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 8,
-    textAlign: "center",
-    display: "flex",
     alignItems: "center",
-    justifyContent: "center",
   },
   titleForm: {
     fontSize: 20,
     fontWeight: '600',
     color: '#2592C5',
-    textAlign: 'center',
     marginBottom: 20,
     paddingTop:10,
     paddingBottom:10,
@@ -149,7 +166,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: "#a9d0ee",
     borderWidth: 2,
-    shadowColor: "#000033",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 20,
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 15,
+    textAlign: "center",
   },
   button: {
     width: "100%",
