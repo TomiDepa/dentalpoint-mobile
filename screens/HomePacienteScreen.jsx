@@ -22,7 +22,7 @@ export default function HomeScreen({ navigation }) {
               style={{ width: "100%", height: 200 }}
               resizeMode="cover"
             />
-            <Text style={styles.welcomeText}>Bienvenido, Tomas</Text>
+            <Text style={styles.welcomeText}>Bienvenido</Text>
             <Text style={styles.subtitle}>
               Brindando sonrisas saludables con la mejor atención profesional.
             </Text>
